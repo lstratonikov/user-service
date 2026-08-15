@@ -1,0 +1,20 @@
+# Бинарники
+main
+user-service
+
+# Swagger документация (генерируется автоматически)
+docs/
+
+# Логи
+*.log
+/tmp/
+
+# Переменные окружения
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Go
+vendor/

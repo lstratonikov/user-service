@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=lstratonikov
+      - POSTGRES_PASSWORD=Udfhltqcrfz25%
+      - POSTGRES_DB=testdb
+      - POSTGRES_HOST_AUTH_METHOD=md5
+      - POSTGRES_INITDB_ARGS=--auth-host=md5
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=512MB
+      -c effective_cache_size=2GB
+      -c work_mem=4MB
+      -c synchronous_commit=off
+    ports:
+      - "5433:5432"
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    container_name: pgbouncer
+    environment:
+      - DATABASES_HOST=postgres
+      - DATABASES_PORT=5432
+      - DATABASES_DBNAME=testdb
+      - PGBOUNCER_LISTEN_PORT=5432
+      - PGBOUNCER_MAX_CLIENT_CONN=10000
+      - PGBOUNCER_DEFAULT_POOL_SIZE=50
+      - PGBOUNCER_POOL_MODE=transaction
+      - PGBOUNCER_AUTH_TYPE=md5
+      - PGBOUNCER_AUTH_FILE=/etc/pgbouncer/userlist.txt
+    volumes:
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+    ports:
+      - "5432:5432"
+    depends_on:
+      - postgres
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./promtail.yml:/etc/promtail/config.yml
+      - /tmp:/tmp
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+volumes:
+  grafana_data:
