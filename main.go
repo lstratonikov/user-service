@@ -39,15 +39,12 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
 
-	// читаем хост БД из переменной окружения
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		dbHost = "localhost"
-	}
-
 	connStr := fmt.Sprintf(
-		"host=%s user=lstratonikov password=Udfhltqcrfz25%% dbname=testdb sslmode=disable default_query_exec_mode=simple_protocol",
-		dbHost,
+		"host=%s user=%s password=%s dbname=%s sslmode=disable default_query_exec_mode=simple_protocol",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
 	)
 
 	db, err := sql.Open("pgx", connStr)
